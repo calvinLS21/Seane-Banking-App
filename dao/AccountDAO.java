@@ -237,6 +237,53 @@ public class AccountDAO {
         return account;
     }
 
+    // ✅ ADD THIS METHOD TO YOUR EXISTING AccountDAO.java
+
+    public java.util.List<Account> getAccountsByCustomer(String customerID) {
+        java.util.List<Account> accounts = new java.util.ArrayList<>();
+        try (Connection conn = DBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(
+                    "SELECT * FROM Account WHERE customerID = ? ORDER BY accountID"
+            );
+            ps.setString(1, customerID);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                int accountID = rs.getInt("accountID");
+                String type = rs.getString("accountType");
+                Account account = null;
+
+                if ("chequeAccount".equals(type)) {
+                    PreparedStatement psCheque = conn.prepareStatement(
+                            "SELECT * FROM ChequeAccount WHERE chequeAccountID = ?"
+                    );
+                    psCheque.setInt(1, accountID);
+                    ResultSet rsCheque = psCheque.executeQuery();
+                    if (rsCheque.next()) {
+                        account = new chequeAccount(
+                                accountID,
+                                rs.getDouble("accountBalance"),
+                                rs.getString("accountName"),
+                                rsCheque.getString("companyName"),
+                                rsCheque.getString("companyAddress")
+                        );
+                    }
+                } else if ("savingsAccount".equals(type)) {
+                    account = new savingsAccount(accountID, rs.getDouble("accountBalance"), rs.getString("accountName"));
+                } else if ("investmentAccount".equals(type)) {
+                    account = new investmentAccount(accountID, rs.getDouble("accountBalance"), rs.getString("accountName"));
+                }
+
+                if (account != null) {
+                    accounts.add(account);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return accounts;
+    }
+
     public List<String[]> getTransactionHistory(int accountID) {
         List<String[]> transactions = new ArrayList<>();
         try (Connection conn = DBConnection.getConnection()) {
