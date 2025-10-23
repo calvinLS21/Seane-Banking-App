@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-    private static final String URL = "jdbc:h2:mem:bankdb;DB_CLOSE_DELAY=-1";
-    private static final String USER = "sa";
-    private static final String PASS = "";
+    private static final String URL = "jdbc:mysql://localhost:3306/bankdb";
+    private static final String USER = "admin";
+    private static final String PASS = "Branch of sin";
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASS);
@@ -66,6 +66,17 @@ public class DBConnection {
                             "companyName VARCHAR(255), " +
                             "companyAddress VARCHAR(255), " +
                             "FOREIGN KEY (chequeAccountID) REFERENCES Account(accountID)" +
+                            ")"
+            );
+            conn.createStatement().execute(
+                    "CREATE TABLE IF NOT EXISTS Transactions (" +
+                            "transactionID INT AUTO_INCREMENT PRIMARY KEY, " +
+                            "accountID INT, " +
+                            "transactionType VARCHAR(255), " +
+                            "amount DOUBLE, " +
+                            "transactionDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                            "toAccountID INT, " +
+                            "FOREIGN KEY (accountID) REFERENCES Account(accountID)" +
                             ")"
             );
         } catch (SQLException e) {
