@@ -15,7 +15,7 @@ public class savingsAccount extends Account {
 
     @Override
     public double calculateInterest() {
-        double interest = getAccountBalance() * 0.0005;
+        double interest = getAccountBalance() * 0.05;
         deposit(interest);
         return interest;
     }
