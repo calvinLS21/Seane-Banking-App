@@ -1,5 +1,6 @@
 package dao;
 
+import model.Account;
 import model.Customer;
 import util.DBConnection;
 
@@ -7,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CustomerDAO {
 
@@ -64,6 +67,33 @@ public class CustomerDAO {
         return customer;
     }
 
+    public List<Customer> getAllCustomers() {
+        List<Customer> customers = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(
+                    "SELECT * FROM Customer c JOIN Person p ON c.nationalID = p.nationalID"
+            );
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Customer customer = new Customer(
+                        rs.getInt("nationalID"),
+                        rs.getString("firstName"),
+                        rs.getString("lastName"),
+                        rs.getString("dateOfBirth"),
+                        rs.getString("address"),
+                        rs.getString("emailAddress"),
+                        rs.getInt("contact"),
+                        rs.getString("customerID"),
+                        rs.getString("customerPassword")
+                );
+                customers.add(customer);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return customers;
+    }
+
     public boolean updateCustomer(Customer customer) {
         try (Connection conn = DBConnection.getConnection()) {
             PreparedStatement psPerson = conn.prepareStatement(
@@ -93,7 +123,6 @@ public class CustomerDAO {
 
     public boolean deleteCustomer(String customerID) {
         try (Connection conn = DBConnection.getConnection()) {
-            // First, retrieve nationalID
             PreparedStatement psGet = conn.prepareStatement(
                     "SELECT nationalID FROM Customer WHERE customerID = ?"
             );
@@ -102,14 +131,12 @@ public class CustomerDAO {
             if (rs.next()) {
                 int nationalID = rs.getInt("nationalID");
 
-                // Delete from Customer
                 PreparedStatement psCustomer = conn.prepareStatement(
                         "DELETE FROM Customer WHERE customerID = ?"
                 );
                 psCustomer.setString(1, customerID);
                 psCustomer.executeUpdate();
 
-                // Delete from Person
                 PreparedStatement psPerson = conn.prepareStatement(
                         "DELETE FROM Person WHERE nationalID = ?"
                 );
