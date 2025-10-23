@@ -1,14 +1,13 @@
 package view;
 
 import controller.CustomerController;
-import model.Account;
 import model.Customer;
 import model.bankTeller;
+import dao.CustomerDAO;
+import controller.AccountController;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class BankTellerView {
     private bankTeller teller;
@@ -20,173 +19,202 @@ public class BankTellerView {
     }
 
     public void show() {
-        JFrame frame = new JFrame("Bank Teller Dashboard - " + teller.getFirstName() + " " + teller.getLastName());
+        JFrame frame = new JFrame("Seane Banking App - Bank Teller Dashboard");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(600, 400);
-        frame.setLayout(new BorderLayout());
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        frame.getContentPane().setBackground(new Color(245, 248, 255));
 
         JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setBackground(new Color(52, 152, 219));  //BLUE TABS
+        tabbedPane.setForeground(Color.WHITE);
+        tabbedPane.setFont(new Font("Arial", Font.BOLD, 14));
 
-        // Create Customer Tab
-        JPanel createCustomerPanel = new JPanel(new GridLayout(10, 2, 10, 10));
-        JTextField natIDField = new JTextField();
-        JTextField firstNameField = new JTextField();
-        JTextField lastNameField = new JTextField();
-        JTextField dobField = new JTextField();
-        JTextField addressField = new JTextField();
-        JTextField emailField = new JTextField();
-        JTextField contactField = new JTextField();
-        JTextField custIDField = new JTextField();
-        JTextField passField = new JTextField();
+        tabbedPane.addTab("Profile", createProfilePanel());
+        tabbedPane.addTab("Create Customer", createCustomerPanel());
+        tabbedPane.addTab("Open Account", createOpenAccountPanel());
 
-        JButton createCustomerButton = new JButton("Create Customer");
-        createCustomerButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    int natID = Integer.parseInt(natIDField.getText().trim());
-                    int contact = Integer.parseInt(contactField.getText().trim());
-                    String password = passField.getText().trim();
-                    if (password.isEmpty()) {
-                        JOptionPane.showMessageDialog(null, "Password cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    if (firstNameField.getText().trim().isEmpty() || lastNameField.getText().trim().isEmpty() ||
-                            emailField.getText().trim().isEmpty() || custIDField.getText().trim().isEmpty()) {
-                        JOptionPane.showMessageDialog(null, "Required fields (First Name, Last Name, Email, Customer ID) cannot be empty",
-                                "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    Customer customer = teller.createCustomerProfile(
-                            natID, firstNameField.getText().trim(), lastNameField.getText().trim(),
-                            dobField.getText().trim(), addressField.getText().trim(), emailField.getText().trim(),
-                            contact, custIDField.getText().trim(), password
-                    );
-                    customerController.createCustomer(customer);
-                    JOptionPane.showMessageDialog(null, "Customer created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    // Clear fields
-                    natIDField.setText("");
-                    firstNameField.setText("");
-                    lastNameField.setText("");
-                    dobField.setText("");
-                    addressField.setText("");
-                    emailField.setText("");
-                    contactField.setText("");
-                    custIDField.setText("");
-                    passField.setText("");
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Invalid input for National ID or Contact", "Error", JOptionPane.ERROR_MESSAGE);
-                } catch (IllegalArgumentException ex) {
-                    JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                }
+        frame.add(tabbedPane, BorderLayout.CENTER);
+
+        //LOGOUT PANEL
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.setBackground(new Color(52, 152, 219));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.setBackground(Color.WHITE);
+        logoutButton.setForeground(new Color(52, 152, 219));
+        logoutButton.setFont(new Font("Arial", Font.BOLD, 14));
+        logoutButton.addActionListener(e -> {
+            frame.dispose();
+            new LoginView().show();
+        });
+        bottomPanel.add(logoutButton);
+
+        frame.add(bottomPanel, BorderLayout.SOUTH);
+        frame.setVisible(true);
+    }
+
+    private JPanel createProfilePanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(245, 248, 255));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 15, 15));
+        formPanel.setBackground(new Color(245, 248, 255));
+
+        JTextField natIDField = new JTextField(String.valueOf(teller.getNationalID()), 20);
+        natIDField.setEditable(false);
+        JTextField firstNameField = new JTextField(teller.getFirstName(), 20);
+        JTextField lastNameField = new JTextField(teller.getLastName(), 20);
+        JTextField dobField = new JTextField(teller.getDateOfBirth(), 20);
+        JTextField addressField = new JTextField(teller.getAddress(), 20);
+        JTextField emailField = new JTextField(teller.getEmailAddress(), 20);
+        JTextField contactField = new JTextField(String.valueOf(teller.getContact()), 20);
+        JTextField tellerIDField = new JTextField(String.valueOf(teller.getBankTellerID()), 20);
+        tellerIDField.setEditable(false);
+        JPasswordField passField = new JPasswordField(teller.getBankTellerPassword(), 20);
+
+        formPanel.add(new JLabel("National ID:", SwingConstants.RIGHT)); formPanel.add(natIDField);
+        formPanel.add(new JLabel("First Name:", SwingConstants.RIGHT)); formPanel.add(firstNameField);
+        formPanel.add(new JLabel("Last Name:", SwingConstants.RIGHT)); formPanel.add(lastNameField);
+        formPanel.add(new JLabel("Date of Birth:", SwingConstants.RIGHT)); formPanel.add(dobField);
+        formPanel.add(new JLabel("Address:", SwingConstants.RIGHT)); formPanel.add(addressField);
+        formPanel.add(new JLabel("Email:", SwingConstants.RIGHT)); formPanel.add(emailField);
+        formPanel.add(new JLabel("Contact:", SwingConstants.RIGHT)); formPanel.add(contactField);
+        formPanel.add(new JLabel("Teller ID:", SwingConstants.RIGHT)); formPanel.add(tellerIDField);
+        formPanel.add(new JLabel("Password:", SwingConstants.RIGHT)); formPanel.add(passField);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.setBackground(new Color(245, 248, 255));
+
+        JButton updateButton = new JButton("Update Profile");
+        JButton deleteButton = new JButton("Delete Profile");
+
+        updateButton.setBackground(Color.WHITE); updateButton.setForeground(new Color(52, 152, 219));
+        deleteButton.setBackground(Color.WHITE); deleteButton.setForeground(new Color(52, 152, 219));
+
+        // ACTION LISTENERS (UNCHANGED)
+        updateButton.addActionListener(e -> {
+            try {
+                teller.setFirstName(firstNameField.getText().trim());
+                teller.setLastName(lastNameField.getText().trim());
+                teller.setDateOfBirth(dobField.getText().trim());
+                teller.setAddress(addressField.getText().trim());
+                teller.setEmailAddress(emailField.getText().trim());
+                teller.setContact(Integer.parseInt(contactField.getText().trim()));
+                teller.setBankTellerPassword(new String(passField.getPassword()));
+                new dao.BankTellerDAO().updateBankTeller(teller);
+                JOptionPane.showMessageDialog(null, "Profile updated!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, "Invalid contact", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        createCustomerPanel.add(new JLabel("National ID:"));
-        createCustomerPanel.add(natIDField);
-        createCustomerPanel.add(new JLabel("First Name:"));
-        createCustomerPanel.add(firstNameField);
-        createCustomerPanel.add(new JLabel("Last Name:"));
-        createCustomerPanel.add(lastNameField);
-        createCustomerPanel.add(new JLabel("Date of Birth:"));
-        createCustomerPanel.add(dobField);
-        createCustomerPanel.add(new JLabel("Address:"));
-        createCustomerPanel.add(addressField);
-        createCustomerPanel.add(new JLabel("Email:"));
-        createCustomerPanel.add(emailField);
-        createCustomerPanel.add(new JLabel("Contact:"));
-        createCustomerPanel.add(contactField);
-        createCustomerPanel.add(new JLabel("Customer ID:"));
-        createCustomerPanel.add(custIDField);
-        createCustomerPanel.add(new JLabel("Password:"));
-        createCustomerPanel.add(passField);
-        createCustomerPanel.add(createCustomerButton);
+        deleteButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(null, "Delete profile?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                new dao.BankTellerDAO().deleteBankTeller(teller.getBankTellerID());
+                JOptionPane.showMessageDialog(null, "Profile deleted!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                System.exit(0);
+            }
+        });
 
-        tabbedPane.addTab("Create Customer", createCustomerPanel);
+        buttonPanel.add(updateButton);
+        buttonPanel.add(deleteButton);
 
-        // Open Account Tab
-        JPanel openAccountPanel = new JPanel(new GridLayout(8, 2, 10, 10));
+        panel.add(formPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JPanel createCustomerPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(245, 248, 255));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 15, 15));
+        formPanel.setBackground(new Color(245, 248, 255));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Create New Customer"));
+
+        JTextField[] fields = {new JTextField(), new JTextField(), new JTextField(), new JTextField(),
+                new JTextField(), new JTextField(), new JTextField(), new JTextField(), new JPasswordField()};
+        String[] labels = {"National ID", "First Name", "Last Name", "DOB", "Address", "Email", "Contact", "Customer ID", "Password"};
+
+        for (int i = 0; i < 8; i++) {
+            formPanel.add(new JLabel(labels[i] + ":", SwingConstants.RIGHT));
+            formPanel.add(fields[i]);
+        }
+        formPanel.add(new JLabel("Password:", SwingConstants.RIGHT));
+        formPanel.add(fields[8]);
+
+        JButton createButton = new JButton("Create Customer");
+        createButton.setBackground(Color.WHITE);
+        createButton.setForeground(new Color(52, 152, 219));
+        createButton.addActionListener(e -> {
+            try {
+                Customer customer = new Customer(Integer.parseInt(fields[0].getText()), fields[1].getText(),
+                        fields[2].getText(), fields[3].getText(), fields[4].getText(), fields[5].getText(),
+                        Integer.parseInt(fields[6].getText()), fields[7].getText(), new String(((JPasswordField)fields[8]).getPassword()));
+                new CustomerDAO().addCustomer(customer);
+                JOptionPane.showMessageDialog(null, "Customer created!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                for (int j = 0; j < 8; j++) fields[j].setText("");
+                ((JPasswordField)fields[8]).setText("");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, "Invalid input", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        formPanel.add(createButton);
+        panel.add(formPanel, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createOpenAccountPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(245, 248, 255));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 15, 15));
+        formPanel.setBackground(new Color(245, 248, 255));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Open New Account"));
+
         JTextField customerIDField = new JTextField();
-        JComboBox<String> accountTypeCombo = new JComboBox<>(new String[]{"Savings", "Investment", "Cheque"});
+        JComboBox<String> accountTypeCombo = new JComboBox<>(new String[]{"savings", "investment", "cheque"});
         JTextField accountNameField = new JTextField();
         JTextField initialBalanceField = new JTextField();
         JTextField companyNameField = new JTextField();
         JTextField companyAddressField = new JTextField();
-        JButton openAccountButton = new JButton("Open Account");
 
-        companyNameField.setEnabled(false);
-        companyAddressField.setEnabled(false);
-        accountTypeCombo.addActionListener(e -> {
-            boolean isCheque = accountTypeCombo.getSelectedItem().equals("Cheque");
-            companyNameField.setEnabled(isCheque);
-            companyAddressField.setEnabled(isCheque);
-        });
+        formPanel.add(new JLabel("Customer ID:", SwingConstants.RIGHT)); formPanel.add(customerIDField);
+        formPanel.add(new JLabel("Account Type:", SwingConstants.RIGHT)); formPanel.add(accountTypeCombo);
+        formPanel.add(new JLabel("Account Name:", SwingConstants.RIGHT)); formPanel.add(accountNameField);
+        formPanel.add(new JLabel("Initial Balance:", SwingConstants.RIGHT)); formPanel.add(initialBalanceField);
+        formPanel.add(new JLabel("Company Name:", SwingConstants.RIGHT)); formPanel.add(companyNameField);
+        formPanel.add(new JLabel("Company Address:", SwingConstants.RIGHT)); formPanel.add(companyAddressField);
 
-        openAccountButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    String customerID = customerIDField.getText().trim();
-                    if (customerID.isEmpty()) {
-                        JOptionPane.showMessageDialog(null, "Customer ID cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    String accountType = (String) accountTypeCombo.getSelectedItem();
-                    String accountName = accountNameField.getText().trim();
-                    if (accountName.isEmpty()) {
-                        JOptionPane.showMessageDialog(null, "Account name cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    double initialBalance = Double.parseDouble(initialBalanceField.getText().trim());
-                    Customer customer = customerController.getCustomer(customerID);
-                    if (customer == null) {
-                        JOptionPane.showMessageDialog(null, "Customer not found", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    String[] extraParams = accountType.equals("Cheque") ?
-                            new String[]{companyNameField.getText().trim(), companyAddressField.getText().trim()} :
-                            new String[]{};
-                    if (accountType.equals("Cheque") && (extraParams[0].isEmpty() || extraParams[1].isEmpty())) {
-                        JOptionPane.showMessageDialog(null, "Customer must be employed and provide valid company name and address for Cheque accounts",
-                                "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    Account account = teller.openCustomerAccount(customer, accountType, initialBalance, accountName, extraParams);
-                    customerController.addAccountToCustomer(customerID, account);
-                    JOptionPane.showMessageDialog(null, "Account '" + accountName + "' opened successfully with ID " + account.getAccountID(),
-                            "Success", JOptionPane.INFORMATION_MESSAGE);
-                    // Clear fields
-                    customerIDField.setText("");
-                    accountNameField.setText("");
-                    initialBalanceField.setText("");
-                    companyNameField.setText("");
-                    companyAddressField.setText("");
-                    accountTypeCombo.setSelectedIndex(0);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Invalid balance format", "Error", JOptionPane.ERROR_MESSAGE);
-                } catch (IllegalArgumentException ex) {
-                    JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        JButton openButton = new JButton("Open Account");
+        openButton.setBackground(Color.WHITE);
+        openButton.setForeground(new Color(52, 152, 219));
+        openButton.addActionListener(e -> {
+            try {
+                Customer customer = new CustomerDAO().getCustomerByID(customerIDField.getText());
+                if (customer == null) {
+                    JOptionPane.showMessageDialog(null, "Customer not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
+                AccountController ac = new AccountController();
+                String result = ac.openAccount(customer, (String)accountTypeCombo.getSelectedItem(),
+                        Double.parseDouble(initialBalanceField.getText()), accountNameField.getText(),
+                        companyNameField.getText(), companyAddressField.getText());
+                JOptionPane.showMessageDialog(null, result, result.startsWith("Success") ? "Success" : "Error",
+                        result.startsWith("Success") ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, "Invalid input", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        openAccountPanel.add(new JLabel("Customer ID:"));
-        openAccountPanel.add(customerIDField);
-        openAccountPanel.add(new JLabel("Account Type:"));
-        openAccountPanel.add(accountTypeCombo);
-        openAccountPanel.add(new JLabel("Account Name:"));
-        openAccountPanel.add(accountNameField);
-        openAccountPanel.add(new JLabel("Initial Balance:"));
-        openAccountPanel.add(initialBalanceField);
-        openAccountPanel.add(new JLabel("Company Name (Cheque):"));
-        openAccountPanel.add(companyNameField);
-        openAccountPanel.add(new JLabel("Company Address (Cheque):"));
-        openAccountPanel.add(companyAddressField);
-        openAccountPanel.add(openAccountButton);
-
-        tabbedPane.addTab("Open Account", openAccountPanel);
-
-        frame.add(tabbedPane, BorderLayout.CENTER);
-        frame.setVisible(true);
+        formPanel.add(openButton);
+        panel.add(formPanel, BorderLayout.CENTER);
+        return panel;
     }
 }
