@@ -41,7 +41,7 @@
                     <archive>
                         <manifest>
                             
-                            <mainClass><SEANE-BANKING-APP class="Main.java">view.Main</SEANE-BANKING-APP></mainClass>
+                            <mainClass>SEANE-BANKING-APP.view.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
