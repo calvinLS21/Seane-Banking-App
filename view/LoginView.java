@@ -3,13 +3,16 @@ package view;
 import controller.AccountController;
 import controller.CustomerController;
 import controller.AdminController;
+import dao.AccountDAO;
 import dao.BankTellerDAO;
 import dao.CustomerDAO;
 import dao.SystemAdminDAO;
 import model.Customer;
+import model.Account;
 import model.bankTeller;
 import model.systemAdmin;
 import util.DBConnection;
+import java.util.List;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,17 +95,25 @@ public class LoginView {
 
                 try {
                     if ("Customer".equals(userType)) {
-                        System.out.println("[DEBUG] Customer login attempt: " + id);
-                        Customer customer = customerDAO.getCustomerByID(id);
-                        if (customer != null && customer.getCustomerPassword().equals(password)) {
-                            System.out.println("[DEBUG] Customer login SUCCESS");
-                            new CustomerView(customer, customerController, accountController).show();
-                            frame.dispose();
-                        } else {
-                            System.out.println("[DEBUG] Customer login FAILED");
-                            JOptionPane.showMessageDialog(frame, "Invalid credentials", "Login Error", JOptionPane.ERROR_MESSAGE);
+                    System.out.println("[DEBUG] Customer login attempt: " + id);
+                    Customer customer = customerDAO.getCustomerByID(id);
+                    if (customer != null && customer.getCustomerPassword().equals(password)) {
+                        System.out.println("[DEBUG] Customer login SUCCESS");
+
+                        // NEW: Load accounts from DB
+                        AccountDAO accountDAO = new AccountDAO();
+                        List<Account> accounts = accountDAO.getAccountsByCustomer(id);
+                        for (Account acc : accounts) {
+                            customer.addAccount(acc);
                         }
+
+                        new CustomerView(customer, customerController, accountController).show();
+                        frame.dispose();
+                    } else {
+                        System.out.println("[DEBUG] Customer login FAILED");
+                        JOptionPane.showMessageDialog(frame, "Invalid credentials", "Login Error", JOptionPane.ERROR_MESSAGE);
                     }
+                }
                     else if ("Bank Teller".equals(userType)) {
                         System.out.println("[DEBUG] Bank Teller login attempt: " + id);
                         int tellerID = Integer.parseInt(id);
