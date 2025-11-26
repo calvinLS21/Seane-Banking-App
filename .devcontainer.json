@@ -1,12 +1,17 @@
 {
-  "name": "Java (17)",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "name": "Java GUI Codespace",
+  "image": "mcr.microsoft.com/devcontainers/java:17",
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
-       "version": "17",
-      "installMaven": "true",
-      "installGradle": "true"
-    } 
+      "version": "17",
+      "installMaven": true,
+      "installGradle": true
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {}
   },
-  "postCreateCommand": "java -version && javac -version"
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y xvfb fluxbox x11vnc novnc websockify && mkdir -p /home/vscode/.vnc",
+  "forwardPorts": [6080],
+  "runArgs": [
+    "--env", "DISPLAY=:99"
+  ]
 }
