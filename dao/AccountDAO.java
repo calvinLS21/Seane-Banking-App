@@ -181,13 +181,10 @@ public class AccountDAO {
             );
             ps.setDouble(1, newBalance);
             ps.setInt(2, accountID);
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new SQLException("No account found with ID: " + accountID);
-            }
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-            throw new RuntimeException("Failed to update account balance: " + e.getMessage());
+            throw new RuntimeException("Failed to update balance: " + e.getMessage());
         }
     }
 
