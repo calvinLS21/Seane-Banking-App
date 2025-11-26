@@ -41,7 +41,7 @@
                     <archive>
                         <manifest>
                             
-                            <mainClass>SEANE-BANKING-APP.view.Main</mainClass>
+                            <mainClass>view.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
