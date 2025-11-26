@@ -12,58 +12,84 @@ public class AccountController {
 
     public String deposit(int accountID, double amount) {
         if (amount <= 0) {
-            return "Error: Invalid deposit amount";
+            return "Error: Amount must be positive";
         }
+
         Account account = accountDAO.getAccountByID(accountID);
         if (account == null) {
             return "Error: Account not found";
         }
+
         String result = account.deposit(amount);
-        if (result.toLowerCase().startsWith("deposited")) {
+
+        // Only update DB if deposit was successful
+        if (result.startsWith("Deposited")) {
             accountDAO.updateAccountBalance(accountID, account.getAccountBalance());
+            // Return nicely formatted message with 2 decimal places
+            return "Deposited " + String.format("%.2f", amount) +
+                    ". New balance: BWP " + String.format("%.2f", account.getAccountBalance());
         }
-        return result;
+
+        return result; // e.g. "Invalid deposit amount"
     }
 
     public String withdraw(int accountID, double amount) {
         if (amount <= 0) {
-            return "Error: Invalid withdrawal amount";
+            return "Error: Amount must be positive";
         }
+
         Account account = accountDAO.getAccountByID(accountID);
         if (account == null) {
             return "Error: Account not found";
         }
+
         if (account instanceof savingsAccount) {
-            System.out.println("Withdrawal blocked for savings account ID " + accountID);
             return "Error: Withdrawals not allowed for Savings Account";
         }
+
         String result = account.withdraw(amount);
-        if (result.toLowerCase().startsWith("withdrew")) {
+
+        if (result.startsWith("Withdrew")) {
             accountDAO.updateAccountBalance(accountID, account.getAccountBalance());
-            return "Success: " + result;
+            return "Withdrew " + String.format("%.2f", amount) +
+                    ". New balance: BWP " + String.format("%.2f", account.getAccountBalance());
         }
+
         return "Error: " + result;
     }
 
     public String transfer(int fromAccountID, int toAccountID, double amount) {
         if (amount <= 0) {
-            return "Error: Invalid transfer amount";
+            return "Error: Amount must be positive";
         }
+        if (fromAccountID == toAccountID) {
+            return "Error: Cannot transfer to the same account";
+        }
+
         Account fromAccount = accountDAO.getAccountByID(fromAccountID);
         Account toAccount = accountDAO.getAccountByID(toAccountID);
+
         if (fromAccount == null || toAccount == null) {
             return "Error: One or both accounts not found";
         }
-        try {
-            if (fromAccount.transferCurrency(amount, toAccount)) {
-                accountDAO.updateAccountBalance(fromAccountID, fromAccount.getAccountBalance());
-                accountDAO.updateAccountBalance(toAccountID, toAccount.getAccountBalance());
-                return "Success: Transferred " + amount + " successfully";
-            }
-            return "Error: Transfer failed";
-        } catch (Exception e) {
-            return "Error: Transfer failed: " + e.getMessage();
+
+        if (fromAccount.getAccountBalance() < amount) {
+            return "Error: Insufficient funds";
         }
+
+        boolean success = fromAccount.transferCurrency(amount, toAccount);
+
+        if (success) {
+            accountDAO.updateAccountBalance(fromAccountID, fromAccount.getAccountBalance());
+            accountDAO.updateAccountBalance(toAccountID, toAccount.getAccountBalance());
+
+            return "Success: Transferred BWP " + String.format("%.2f", amount) +
+                    " to account ID " + toAccountID +
+                    "\nFrom: BWP " + String.format("%.2f", fromAccount.getAccountBalance()) +
+                    " → To: BWP " + String.format("%.2f", toAccount.getAccountBalance());
+        }
+
+        return "Error: Transfer failed";
     }
 
     public String closeAccount(int accountID) {
